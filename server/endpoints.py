@@ -20,6 +20,7 @@ SIGNUP_EP = '/signup'
 PROFILE_EP = '/profile'
 CREATEPROFILE_EP = '/createProfile'
 VIEWTASKS_EP = '/viewTasks'
+VIEWUSERTASKS_EP = '/viewUserTasks'
 POSTTASK_EP = '/postTask'
 VIEWGOALS_EP = '/viewGoals'
 POSTGOAL_EP = '/postGoal'
@@ -89,6 +90,9 @@ class Login(Resource):
     This class supports fetching a user data for login
     """
     def post(self):
+        """
+        posts the user data for login
+        """
         return {
             TOKEN_RESP: TEST_USER_TOKEN
         }
@@ -100,36 +104,55 @@ class Logout(Resource):
     This class supports fetching a user data for logout
     """
     def post(self):
+        """
+        posts the user data for logout
+        """
         return {
             MESSAGE_RESP: 'YOU HAVE SUCCESSFULLY LOGGED OUT'
         }
 
 
-@api.route(f'{SIGNUP_EP}', methods=['POST'])
-class Signup(Resource):
-    """
-    This class supports fetching a user data for signup
-    """
-    @api.response(HTTPStatus.OK, 'Success')
-    @api.response(HTTPStatus.NOT_ACCEPTABLE, 'Not Acceptable')
-    def post(self):
-        data = request.get_json()
-        print(data['username'])
-        return {
-            TOKEN_RESP: TEST_USER_TOKEN,
-            USERNAME_RESP: data[USERNAME_RESP]
-        }
+# @api.route(f'{SIGNUP_EP}', methods=['POST'])
+# class Signup(Resource):
+#     """
+#     This class supports fetching a user data for signup
+#     """
+#     @api.response(HTTPStatus.OK, 'Success')
+#     @api.response(HTTPStatus.NOT_ACCEPTABLE, 'Not Acceptable')
+#     def post(self):
+#         data = request.get_json()
+#         print(data['username'])
+#         return {
+#             TOKEN_RESP: TEST_USER_TOKEN,
+#             USERNAME_RESP: data[USERNAME_RESP]
+#         }
 
 
-@api.route(f'{PROFILE_EP}', methods=['GET'])
+profile_id = api.model("Profile", {
+    PROFILE_ID: fields.String
+})
+
+
+@api.route(f'{PROFILE_EP}', methods=['POST'])
+@api.expect(profile_id)
+@api.response(HTTPStatus.OK, 'Success')
+@api.response(HTTPStatus.NOT_ACCEPTABLE, 'Not Acceptable')
 class Profile(Resource):
     """
-    This class will deliver contents for user profile.
+    This class will deliver contents for any user profile.
     """
-    def get(self):
-        user_id = request.args[PROFILE_ID]
-        profile = pf.get_profile(user_id)
-        return profile
+    def post(self):
+        """
+        posts the user's id for fetching user's profile data
+        """
+        user_id = request.json[PROFILE_ID]
+        try:
+            profile = pf.get_profile(user_id)
+            if profile is None:
+                raise wz.ServiceUnavailable('We have a technical problem.')
+            return profile
+        except ValueError as e:
+            raise wz.NotAcceptable(f'{str(e)}')
 
 
 new_profile_field = api.model('NewProfile', {
@@ -149,6 +172,9 @@ class CreateProfile(Resource):
     @api.response(HTTPStatus.OK, 'Success')
     @api.response(HTTPStatus.NOT_ACCEPTABLE, 'Not Acceptable')
     def post(self):
+        """
+        posts the user's profile data for creating a new user profile
+        """
         name = request.json[pf.NAME]
         goals = request.json[pf.GOALS]
         private = request.json[pf.PRIVATE]
@@ -176,6 +202,9 @@ class RemoveProfile(Resource):
     This class will remove user profile and return remove status
     """
     def post(self):
+        """
+        posts the user's id for deleting the user's profile
+        """
         profile_id = request.json[pf.MOCK_ID]
         try:
             pf.del_profile(profile_id)
@@ -187,10 +216,12 @@ class RemoveProfile(Resource):
 @api.route(f'{VIEWTASKS_EP}', methods=['GET'])
 class ViewTasks(Resource):
     """
-    This class will show tasks for the user profile
+    This class will show all tasks
     """
     def get(self):
-        # return jsonify(tasks.get_tasks())
+        """
+        gets all the tasks
+        """
         return {
             TASKS: tasks.get_tasks()
         }
@@ -202,6 +233,9 @@ class ProfileValidation(Resource):
     This class validates the user profile
     """
     def get(self):
+        """
+        gets the validation of user profile
+        """
         return {
             PROFILE_VALID_RESP: True
         }
@@ -222,14 +256,10 @@ class PostTask(Resource):
     """
     This class is for posting task
     """
-    # def post(self):
-    #     data = request.get_json()
-    #     print(data['username'])
-    #     return {
-    #         TASK_RESP: TEST_TASK,
-    #         USERNAME_RESP: data[USERNAME_RESP]
-    #     }
     def post(self):
+        """
+        posts a new task data to create a new task.
+        """
         user_id = request.json[tasks.USER_ID]
         title = request.json[tasks.TITLE]
         content = request.json[tasks.CONTENT]
@@ -248,6 +278,9 @@ class ViewGoals(Resource):
     This class shows goals on the user profile.
     """
     def get(self):
+        """
+        gets all the goals of a user
+        """
         return {
             GOALS: pf.get_goals()
         }
@@ -268,6 +301,9 @@ class PostGoal(Resource):
     This class posts goals to user profile.
     """
     def post(self):
+        """
+        posts a new goal data to create a new goal
+        """
         id = request.json[pf.MOCK_ID]
         goal = request.json[pf.GOAL]
         try:
@@ -279,18 +315,18 @@ class PostGoal(Resource):
             raise wz.NotAcceptable(f'{str(e)}')
 
 
-@api.route(f'{DELETEGOAL_EP}', methods=['POST'])
-class DeleteGoal(Resource):
-    """
-    This class deletes goals from user profile.
-    """
-    def post(self):
-        data = request.get_json()
-        print(data['username'])
-        return {
-            GOAL_RESP: TEST_TASK,
-            USERNAME_RESP: data[USERNAME_RESP]
-        }
+# @api.route(f'{DELETEGOAL_EP}', methods=['POST'])
+# class DeleteGoal(Resource):
+#     """
+#     This class deletes goals from user profile.
+#     """
+#     def post(self):
+#         data = request.get_json()
+#         print(data['username'])
+#         return {
+#             GOAL_RESP: TEST_TASK,
+#             USERNAME_RESP: data[USERNAME_RESP]
+#         }
 
 
 new_profileGroup_field = api.model('NewGroup', {
@@ -307,7 +343,9 @@ class ViewProfileGroup(Resource):
     This class shows the groups for each user.
     """
     def post(self):
-        # user_id = "656e29138f600af5c067f4de"
+        """
+        posts a user's id to get the user's profile groups
+        """
         user_id = request.json[pf.MOCK_ID]
         return {
             GROUPS: pf.get_groups(str(user_id))
@@ -328,14 +366,10 @@ class AddGroup(Resource):
     """
     This class posts group to the user profile.
     """
-    # def post(self):
-    #     data = request.get_json()
-    #     print(data['username'])
-    #     return {
-    #         GROUP_RESP: TEST_TASK,
-    #         USERNAME_RESP: data[USERNAME_RESP]
-    #     }
     def post(self):
+        """
+        posts a new group data to create a new group
+        """
         id = request.json.get(pf.MOCK_ID, None)
         # groups = request.json.get(pf.GROUPS, None)
         group = request.json.get(pf.GROUP, None)
@@ -350,18 +384,44 @@ class AddGroup(Resource):
             raise wz.NotAcceptable(f'{str(e)}')
 
 
-@api.route(f'{DELETEGROUP_EP}', methods=['POST'])
-class DeleteGroup(Resource):
+# @api.route(f'{DELETEGROUP_EP}', methods=['POST'])
+# class DeleteGroup(Resource):
+#     """
+#     This class deletes group of the user profile.
+#     """
+#     def post(self):
+#         data = request.get_json()
+#         print(data['username'])
+#         return {
+#             GROUP_RESP: TEST_TASK,
+#             USERNAME_RESP: data[USERNAME_RESP]
+#         }
+
+
+user_task_field = api.model('UserTasks', {
+    tasks.USER_ID: fields.String,
+})
+
+
+@api.route(f'{VIEWUSERTASKS_EP}', methods=['POST'])
+@api.expect(user_task_field)
+@api.response(HTTPStatus.OK, 'Success')
+@api.response(HTTPStatus.NOT_ACCEPTABLE, 'Not Acceptable')
+class ViewUserTasks(Resource):
     """
-    This class deletes group of the user profile.
+    This class is for getting a user's tasks
     """
     def post(self):
-        data = request.get_json()
-        print(data['username'])
-        return {
-            GROUP_RESP: TEST_TASK,
-            USERNAME_RESP: data[USERNAME_RESP]
-        }
+        """
+        posts a user's id to get all the user's tasks
+        """
+        user_id = request.json[tasks.USER_ID]
+        try:
+            return {
+                TASKS: tasks.get_user_tasks(user_id)
+            }
+        except ValueError as e:
+            raise wz.NotAcceptable(f'{str(e)}')
 
 
 like_task_field = api.model('LikeTask', {
@@ -379,6 +439,9 @@ class LikeTask(Resource):
     This class likes the taks under user's task lists
     """
     def post(self):
+        """
+        post a user's id and task id to like a task
+        """
         task_id = request.json[tasks.ID]
         user_id = request.json[tasks.USER_ID]
         try:
@@ -399,6 +462,9 @@ class UnlikeTask(Resource):
     This class likes the taks under user's task lists
     """
     def post(self):
+        """
+        post a user's id and task id to unlike a task
+        """
         task_id = request.json[tasks.ID]
         user_id = request.json[tasks.USER_ID]
         try:

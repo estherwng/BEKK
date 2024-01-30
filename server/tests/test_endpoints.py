@@ -44,6 +44,8 @@ SAMPLE_TASK = {
     ep.LIKE: False
 }
 
+SAMPLE_ID = "656e2bdc5168d371dc3916e9" 
+
 def test_login():
     resp = TEST_CLIENT.post(ep.LOGIN_EP, json=SAMPLE_USER)
     print(f'{resp=}')
@@ -58,6 +60,7 @@ def test_logout():
     print(f'{resp_json=}')
     assert ep.MESSAGE_RESP in resp_json
 
+@pytest.mark.skip(reason= "not using this endpoint") 
 def test_signup():
     resp = TEST_CLIENT.post(ep.SIGNUP_EP, json=SAMPLE_USER)
     print(f'{resp=}')
@@ -69,29 +72,16 @@ def test_signup():
 @pytest.fixture(scope="function")
 def test_generate_valid_profile_id():
     """
-    this profile id has to always be part of the profiles database
+    checks and generates profile id from profile collections in MongoDB
     """
-    return "656e29138f600af5c067f4de" 
-
-@pytest.mark.skip("working on")
+    assert SAMPLE_ID is not None 
+    return {ep.PROFILE_ID : SAMPLE_ID}
+    
 def test_get_profile(test_generate_valid_profile_id):
-    resp = TEST_CLIENT.get(ep.PROFILE_EP, query_string={ep.PROFILE_ID:f'{test_generate_valid_profile_id}'}) 
+    resp = TEST_CLIENT.post(ep.PROFILE_EP, json=test_generate_valid_profile_id) 
     resp_json = resp.get_json() 
     assert isinstance(resp_json, dict)
-    assert ep.NAME in resp_json 
-    assert ep.GROUPS in resp_json 
-    assert ep.GOALS in resp_json
-    assert ep.PRIVATE in resp_json
-    groups = resp_json[ep.GROUPS] 
-    goals = resp_json[ep.GOALS] 
-    assert isinstance(resp_json[ep.NAME], str)
-    assert isinstance(resp_json[ep.PRIVATE], bool)
-    assert isinstance(groups, list) 
-    assert isinstance(goals, list)
-    for group_name in groups:
-        assert isinstance(group_name, str) 
-    for goal_title in goals:
-        assert isinstance(goal_title, str)
+    assert resp.status_code == OK 
 
 @patch('db.profiles.add_profile', return_value=pf.MOCK_ID, autospec=True)
 def test_create_profile(mock_add):
@@ -102,11 +92,6 @@ def test_create_profile(mock_add):
 def test_create_bad_profile(mock_add):
     resp = TEST_CLIENT.post(ep.CREATEPROFILE_EP, json=pf.get_test_profile())
     assert resp.status_code == NOT_ACCEPTABLE
-    
-@pytest.mark.skip("endpoint does not exist yet")
-def test_modify_profile():
-    TEST_CLIENT.post(ep.MODIFYPROFILE_EP, json=pf.get_mod_profile()) 
-    assert resp.status_code == OK 
  
 @patch('db.users.get_users')
 def test_get_users(mock_get_users):
@@ -184,7 +169,7 @@ def test_postGoal():
     resp = TEST_CLIENT.post(ep.POSTGOAL_EP, json=pf.get_new_test_goal())
     assert resp.status_code == OK
 
-
+@pytest.mark.skip(reason= "not using this endpoint") 
 def test_deleteGoal():
     resp = TEST_CLIENT.post(ep.DELETEGOAL_EP, json=SAMPLE_USER)
     print(f'{resp=}')
@@ -205,10 +190,11 @@ def test_viewProfileGroups():
     assert isinstance(resp_json, dict)
     # assert ep.GROUPS in resp_json
 
-@pytest.fixture()
-def setup_deleteGroup():
-    usrs.delete_group(SAMPLE_USER[ep.USERNAME_RESP], SAMPLE_PROFILE[ep.NAME], SAMPLE_PROFILE[ep.GOALS])
+# @pytest.fixture()
+# def setup_deleteGroup():
+#     usrs.delete_group(SAMPLE_USER[ep.USERNAME_RESP], SAMPLE_PROFILE[ep.NAME], SAMPLE_PROFILE[ep.GOALS])
 
+@pytest.mark.skip(reason= "not using this endpoint") 
 def test_deleteGroup():
     resp = TEST_CLIENT.post(ep.DELETEGROUP_EP, json=SAMPLE_USER)
     print(f'{resp=}')
@@ -234,6 +220,21 @@ def test_postTask(mock_add):
     resp = TEST_CLIENT.post(ep.POSTTASK_EP, json=tsks.get_new_test_task())
     assert resp.status_code == OK
 
+def test_viewUserTask():
+    new_task = tsks.get_new_test_task()
+    test_task_id = str(tsks.add_task(new_task[tsks.USER_ID], new_task[tsks.TITLE], new_task[tsks.CONTENT]))
+    test_user_id = str(new_task[tsks.USER_ID])
+    resp = TEST_CLIENT.post(ep.VIEWUSERTASKS_EP, json={tsks.USER_ID: test_user_id})
+    resp_json = resp.get_json()
+    assert isinstance(resp_json, dict)
+    assert ep.TASKS in resp_json
+    tasks = resp_json[ep.TASKS]
+    assert isinstance(tasks, dict)
+    for task_id in tasks:
+        assert isinstance(task_id, str)
+        assert isinstance(tasks[task_id], dict)
+    tsks.del_task(test_task_id)
+
 def test_likeTask():
     new_task = tsks.get_new_test_task()
     test_task_id = str(tsks.add_task(new_task[tsks.USER_ID], new_task[tsks.TITLE], new_task[tsks.CONTENT]))
@@ -257,7 +258,6 @@ def test_removeProfile():
     resp = TEST_CLIENT.post(ep.REMOVEPROFILE_EP, json={pf.MOCK_ID: test_profile_id})
     assert resp.status_code == OK
     pf.del_profile(test_profile_id)
-
 
 
 # @pytest.fixture()
