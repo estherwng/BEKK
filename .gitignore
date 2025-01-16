@@ -9,6 +9,12 @@ __pycache__/
 # virtual env
 demo-repo4-venv
 
+# log files
+server/access_logs.txt
+server/admin_access_logs.txt
+access_logs.txt
+admin_access_logs.txt
+
 # vim files
 *~
 
@@ -118,6 +124,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Environment Setup
+local_dev.sh
 
 # Spyder project settings
 .spyderproject

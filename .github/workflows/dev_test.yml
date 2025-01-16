@@ -4,9 +4,9 @@ name: Demo CI/CD
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
-    branches: [ master ]
-  # pull_request:
-    # branches: [ master ]
+    branches: [ 'brian/**', 'kevin/**', 'kaitlyn/**', 'esther/**' ]
+  pull_request:
+    branches: [ 'brian/**', 'kevin/**', 'kaitlyn/**', 'esther/**' ]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -17,8 +17,6 @@ env:
   CLOUD_MONGO: ${{ vars.CLOUD_MONGO }}
   CLOUD_MONGO_CONN: ${{ vars.CLOUD_MONGO_CONN }}
   CLOUD_MONGO_URL: ${{ vars.CLOUD_MONGO_URL }}
-  # CLOUD_MONGO_USER: ${{ vars.CLOUD_MONGO_USER }}
-  # CLOUD_MONGO_PW: ${{ vars.CLOUD_MONGO_PW }}
   CLOUD_MONGO_USER: ${{ secrets.CLOUD_MONGO_USER }}
   CLOUD_MONGO_PW: ${{ secrets.CLOUD_MONGO_PW }}
   VENV: ${{ vars.VENV }}
@@ -50,22 +48,8 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-        # - name: Install MongoDB
-        # uses: supercharge/mongodb-github-action@1.8.0
-
       - name: Install Python packages.
         run: make dev_env
 
       - name: Run Python tests. (Lint Unit)
         run: make all_tests
-        
-
-      - name: Deploy to PythonAnywhere
-        run: |
-          chmod 755 deploy.sh
-          ./deploy.sh
-        # env:
-          # VENV: ${{ vars.VENV }}
-          # PA_DOMAIN: ${{ vars.PA_DOMAIN }}
-          # PA_USER: ${{ vars.PA_USER }}
-          # PA_PWD: ${{ secrets.PA_PWD }}
